@@ -1,0 +1,14 @@
+name: Welcome Echo
+
+on:
+  workflow_dispatch:    # run manually from the Actions tab
+  push:                 # (optional) run on every push
+    branches: [ main ]
+
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say hello
+        run: echo " welcome to guild engineering take home test"
+
