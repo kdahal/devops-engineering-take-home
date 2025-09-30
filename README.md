@@ -60,4 +60,4 @@ cd src && python -m pytest test_validation.py -v
 - Scope: Core + AIOps in 2hrs; omits canary for simplicity.
 - Security: OIDC for CI/CD; access keys as fallback.
 
-Submit fork to Chike. Questions? [kumar.dahal@outlook.com]. Enjoy building! 🚀
+Questions? [kumar.dahal@outlook.com]. Enjoy building! 🚀
