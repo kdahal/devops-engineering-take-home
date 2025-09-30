@@ -7,7 +7,8 @@ from aws_cdk import (
     aws_cloudwatch as cloudwatch,
     aws_cloudwatch_actions as actions,
     Duration,
-    Tags
+    Tags,
+    RemovalPolicy
 )
 from constructs import Construct
 
@@ -88,8 +89,7 @@ class LambdaStack(Stack):
             scale_in_cooldown=Duration.seconds(600)    # 10min scale-in
         )
 
-        # Monitoring & Alarms (per operational_requirements.md)
-        # Error rate alarm (critical)
+        # Monitoring & Alarms
         error_alarm = lambda_function.metric_errors(
             period=Duration.minutes(1),
             threshold=5,  # >5 errors/min
@@ -100,7 +100,7 @@ class LambdaStack(Stack):
             evaluation_periods=2,
             alarm_description="High Lambda error rate"
         )
-        error_alarm.add_alarm_action(actions.EmsAction("arn:aws:sns:us-west-2:123456789012:GuildAlerts"))  # Placeholder SNS
+        error_alarm.add_alarm_action(actions.EmsAction("arn:aws:sns:us-west-2:123456789012:GuildAlerts"))  # Placeholder SNS ARN; replace with Guild's alerting topic in prod
 
         # Latency alarm (warning)
         latency_alarm = lambda_function.metric_duration(

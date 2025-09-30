@@ -10,11 +10,11 @@ on:
 jobs:
   test-and-deploy:
     runs-on: ubuntu-latest
-    environment: test  # GitHub env for secrets
+    environment: test
     permissions:
       id-token: write
       contents: read
-      checks: write    # For test reporting
+      checks: write
 
     steps:
       - name: Checkout code
@@ -40,8 +40,14 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # OIDC role for test account
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-west-2
+
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          path: .
+          args: --json
 
       - name: Run unit tests
         run: |
@@ -50,10 +56,9 @@ jobs:
         env:
           LOG_LEVEL: INFO
 
-      - name: Security scan (basic dependency check)
+      - name: Security scan (dependencies)
         run: |
-          pip check  # Check for vulnerable deps
-          # Optional: Add pip-audit if available
+          pip check
 
       - name: Lint code
         run: |
@@ -61,13 +66,13 @@ jobs:
           black --check .
           flake8 .
 
-      - name: Bootstrap CDK (if needed)
+      - name: Bootstrap CDK
         run: |
           cd iac
           cdk bootstrap aws://$(aws sts get-caller-identity --query Account --output text)/us-west-2
 
       - name: Deploy to Test Environment
-        if: github.ref == 'refs/heads/main'  # Only deploy on main push
+        if: github.ref == 'refs/heads/main'
         run: |
           cd iac
           cdk deploy --require-approval never --context env=test
@@ -78,8 +83,7 @@ jobs:
       - name: Post-deployment validation
         if: github.ref == 'refs/heads/main'
         run: |
-          # Fetch API URL from CDK outputs (parse from cdk.out)
-          API_URL=$(cd iac && cdk deploy --require-approval never --outputs-file outputs.json && jq -r '.GuildLambdaStack.ApiEndpoint' outputs.json)
-          curl -f $API_URL  # Basic health check
+          API_URL=$(cd iac && cdk deploy --require-approval never --outputs-file outputs.json && jq -r '.GuildLambdaStack-Test.ApiEndpoint' outputs.json)
+          curl -f $API_URL
           echo "Deployment successful: $API_URL"
           
